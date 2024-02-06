@@ -135,6 +135,7 @@ if __name__ == '__main__':
 
     for i in range(n_intervals): 
         results[i, :] = convert_counts(ser, dt)
+        print(results)
 
     
 
