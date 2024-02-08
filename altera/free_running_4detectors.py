@@ -18,23 +18,15 @@ WELCOME_STRING = r'''
        |_|                                |
 '''
 
-BLUE = '\033[94m'
-GREEN = '\033[92m'
-RED = '\033[91m'
-BOLD = '\033[1m'
-UNDERLINE = '\033[4m'
-END = '\033[0m'
-
-
 def get_user_input():
     # TODO at some point should have some defaults, would be nice if uses 
     # last input. use .ini or config or smth like that
-    port        = input(BLUE + "Enter FPGA port:\t" + END)
-    n_intervals = input(BLUE + "Number of intervals:\t" + END)
-    dt          = input(BLUE + "Time per interval (s):\t" + END)
-    coinc_time  = input(BLUE + "Coincidence time (ns):\t" + END)
+    port        = input("Enter FPGA port:\t\t")
+    n_intervals = input("Number of intervals:\t")
+    dt          = input("Time per interval (s):\t")
+    coinc_time  = input("Coincidence time (ns):\t")
 
-    return port, n_intervals, dt, coinc_time
+    return port, int(n_intervals), float(dt), float(coinc_time)
 
 def bytes2count(data): 
     count = 0 
