@@ -21,7 +21,7 @@ WELCOME_STRING = r'''
 def get_user_input():
     # TODO at some point should have some defaults, would be nice if uses 
     # last input. use .ini or config or smth like that
-    port        = input("Enter FPGA port:\t\t")
+    port        = input("Enter FPGA port:\t")
     n_intervals = input("Number of intervals:\t")
     dt          = input("Time per interval (s):\t")
     coinc_time  = input("Coincidence time (ns):\t")
