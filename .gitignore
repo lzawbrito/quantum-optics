@@ -2,3 +2,5 @@
 fig/.DS_Store
 kiko-scripts/
 notes.md
+altera/data/
+altera/__pycache__

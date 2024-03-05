@@ -4,6 +4,8 @@ Based on https://egalvez.colgate.domains/pql/wp-content/uploads/2022/07/FreeRunn
 
 import serial
 import numpy as np
+import configparser
+import os 
 
 BAUDRATE = 19200 
 
@@ -18,23 +20,63 @@ WELCOME_STRING = r'''
        |_|                                |
 '''
 
-def get_user_input():
+
+def get_user_input(path):
     # TODO at some point should have some defaults, would be nice if uses 
     # last input. use .ini or config or smth like that
-    port        = input("Enter FPGA port:\t")
-    n_intervals = input("Number of intervals:\t")
-    dt          = input("Time per interval (s):\t")
-    coinc_time  = input("Coincidence time (ns):\t")
 
-    return port, int(n_intervals), float(dt), float(coinc_time)
+    config = configparser.ConfigParser() 
 
-def bytes2count(data): 
+    config.read(os.path.join(path, 'settings.ini'))
+
+    default_settings = config['user_input']
+
+    prompts = [f'Enter FPGA port ({default_settings['port']}):\t\t',
+               f'Number of intervals ({default_settings['n_intervals']}):\t\t', 
+               f'Time per interval (s) ({default_settings['dt']}):\t\t', 
+               f'Coincidence time (ns) ({default_settings['coinc_time']}):\t\t']
+    
+    user_settings = {'port' : '',
+                     'n_intervals': '', 
+                     'dt': '', 
+                     'coinc_time': ''}
+
+    for prompt, setting in zip(prompts, user_settings.keys()): 
+        user_input = input(prompt)
+        if user_input == '': 
+            user_input = default_settings[setting]
+
+        user_settings[setting] = user_input
+    
+    for key in user_settings.keys():
+        print(user_settings[key])
+
+    return user_settings
+
+
+def decode_int(data): 
     count = 0 
     i = 0
     for b in data: 
         count += 2 ** (i * 7) * b
         i += 1
     return count
+
+
+def encode7bit(int):
+    bytes_ = []
+    for i in range(5):
+        bytes_.append(int & 0x7f) # bitwise and with 0x7f 7 one bits, i.e., just get 7 bits
+        int >>= 7 # consider next 7 bits
+
+    return bytes_
+
+def clean_up_data(raw_data, data_len): 
+    tbi = raw_data.find(255) # TODO sometimes missing stop byte? multiple stop bytes?
+    # print(tbi)
+    # Save to clean data array, starting from previous iteration's termination
+    return raw_data[(tbi + 1):(tbi + data_len - 40)] 
+
 
 def convert_counts(ser, time_interval): 
     """..."""
@@ -43,20 +85,18 @@ def convert_counts(ser, time_interval):
         data_len = 41 * (length * 10) + 40 # time interval in tenths of seconds
 
         # this array stores the bytes received from the altera (valued 0-255).
-        raw_data = np.zeros(data_len)
+        raw_data = bytearray()
         for i in range(length):
             altera_data = ser.read(512) # Each time interval we read 512 bytes.
-
-            # store the altera data in raw_data. 
-            raw_data[(i * 512 + 1):i*(512 + 1)] = altera_data 
-            # TODO the above is likely incorrect, there's some fudging with 
-            # zero indexing
+            raw_data += altera_data
 
         # Find termination byte (255) index 
-        tbi = np.where(raw_data == 255)[0][0]
-        clean_data = raw_data[tbi:(tbi + data_len - 40)] # Save to clean data array
+        clean_data = clean_up_data(raw_data, data_len)
+        # print(clean_data)
 
-        counts = np.zeros(8)
+        # print(f'len(clean_data):\t{len(clean_data)}')
+
+        counts = np.zeros(8, dtype=int)
 
         times = np.arange(0, 41 * length, 41)
         detector_pairs = np.arange(0, 8)
@@ -66,10 +106,10 @@ def convert_counts(ser, time_interval):
         for d in detector_pairs: 
             # loop through time 
             for t in times:
-                count_from_data = bytes2count(clean_data[(d + l):(d + l + 5)])
+                count_from_data = decode_int(clean_data[(d + l + t):(d + l + t + 5)])
                 counts[d] = counts[d] + count_from_data
 
-            l += 5 # move forward 5 bytes for next detector pair
+            l += 4 # move forward 5 bytes for next detector pair (i.e., 4 indices)
         
         return counts
         
@@ -84,9 +124,9 @@ def convert_counts(ser, time_interval):
             counts += convert_frame(10) 
         
         # do remainder
-        counts += convert_frame(time_interval % 10)
+        counts += convert_frame(int(time_interval % 10))
     else:
-        counts =+ convert_frame(time_interval)
+        counts =+ convert_frame(int(time_interval))
 
     return counts 
 
@@ -96,39 +136,35 @@ def acc_coinc(a, b, coinc_time, dt, n_measures):
     Accidental coincidences (deltat = coinc_time * 10e-9)
     """
 
-    return np.sum(a) * np.sum(b) * coinc_time * 10e-9 / (n_measures * dt)
     # calculate the accidental coincidences (kiko ln 499) 
-    """
-         countt=num2str((stateindexi-1)*2+3);
-    xl2range2=strcat('A',countt);
-    accidentalstotAB = sum(resultsmatrix(1:numofmeasurements, 1)) * sum(resultsmatrix(1:numofmeasurements, 2)) * deltat / (numofmeasurements*timeinterval);
-    accidentalstotBAp=sum(resultsmatrix(1:numofmeasurements,2))*sum(resultsmatrix(1:numofmeasurements,3))*deltat/(numofmeasurements*timeinterval);
-    accidentalstotABp=sum(resultsmatrix(1:numofmeasurements,1))*sum(resultsmatrix(1:numofmeasurements,4))*deltat/(numofmeasurements*timeinterval);
-    accidentalstotApBp=sum(resultsmatrix(1:numofmeasurements,2))*sum(resultsmatrix(1:numofmeasurements,4))*deltat/(numofmeasurements*timeinterval);
-    xlswrite(nams,[sum(resultsmatrix(1:numofmeasurements,1)),sum(resultsmatrix(1:numofmeasurements,2)),sum(resultsmatrix(1:numofmeasurements,3)),...
-        sum(resultsmatrix(1:numofmeasurements,4)),sum(resultsmatrix(1:numofmeasurements,5)),sum(resultsmatrix(1:numofmeasurements,6)),...
-        sum(resultsmatrix(1:numofmeasurements,7)),sum(resultsmatrix(1:numofmeasurements,8)),accidentalstotAB,accidentalstotBAp,accidentalstotABp,accidentalstotApBp],Sheet2,xl2range2)
-    pause(statepause);
-    count=1;"""
+    return np.sum(a) * np.sum(b) * coinc_time * 10e-9 / (n_measures * dt)
+
 
 if __name__ == '__main__':
     print(WELCOME_STRING)
-    port, n_intervals, dt, coinc_time = get_user_input()
+    fpath = os.path.dirname(os.path.abspath(__file__))
+    settings = get_user_input(fpath)
 
     print(f'\nBaudrate:\t\t{BAUDRATE} bps')
 
-    ser = serial.Serial(port, BAUDRATE, timeout=0,
+    ser = serial.Serial(settings['port'], BAUDRATE, timeout=0,
                          parity=serial.PARITY_EVEN, rtscts=1)
 
     # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
     # n_measurements = n_intervals
     # (A, B, A', B', AB, AA', BB', A'B')
-    results = np.zeros((n_intervals, 8))
+    results = np.zeros((int(settings['n_intervals']), 8), dtype=int)
 
-    for i in range(n_intervals): 
-        results[i, :] = convert_counts(ser, dt)
-        print(results)
+    for i in range(int(settings['n_intervals'])): 
+        results[i, :] = convert_counts(ser, float(settings['dt']))
 
-    
+    np.save('./altera/data/test.npy', results)
+    np.savetxt('./altera/data/test.txt', results, fmt='%i')
+
+    config = configparser.ConfigParser()
+    config['user_input'] = settings
+
+    with open(os.path.join(fpath, 'settings.ini'), 'w') as configfile:
+        config.write(configfile)
 
 
