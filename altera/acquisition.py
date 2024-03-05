@@ -31,12 +31,14 @@ def get_user_input(path):
 
     default_settings = config['user_input']
 
-    prompts = [f'Enter FPGA port ({default_settings['port']}):\t\t',
+    prompts = [f'Data directory:\t\t\t',
+               f'Enter FPGA port ({default_settings['port']}):\t\t',
                f'Number of intervals ({default_settings['n_intervals']}):\t\t', 
                f'Time per interval (s) ({default_settings['dt']}):\t\t', 
                f'Coincidence time (ns) ({default_settings['coinc_time']}):\t\t']
     
-    user_settings = {'port' : '',
+    user_settings = {'data_dir': '',
+                     'port' : '',
                      'n_intervals': '', 
                      'dt': '', 
                      'coinc_time': ''}
@@ -158,8 +160,8 @@ if __name__ == '__main__':
     for i in range(int(settings['n_intervals'])): 
         results[i, :] = convert_counts(ser, float(settings['dt']))
 
-    np.save('./altera/data/test.npy', results)
-    np.savetxt('./altera/data/test.txt', results, fmt='%i')
+    np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
+    np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i')
 
     config = configparser.ConfigParser()
     config['user_input'] = settings
