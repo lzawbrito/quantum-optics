@@ -2,7 +2,7 @@ import serial
 import struct
 import time
 import numpy as np
-from free_running_4detectors import encode7bit
+from altera.acquisition import encode7bit
 
 # Define the virtual serial port name
 serial_port = input('Port: ')
