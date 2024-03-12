@@ -2,7 +2,7 @@ import serial
 import struct
 import time
 import numpy as np
-from altera.acquisition import encode7bit
+from acquisition import encode7bit
 
 # Define the virtual serial port name
 serial_port = input('Port: ')
@@ -19,6 +19,8 @@ try:
     ser.reset_input_buffer()
     ser.reset_output_buffer()
     while True:
+        time.sleep(0.01)
+
         counts = [np.random.randint(255, dtype='int32') for i in range(8)]
         # print(counts)
         # int32 -> 4 bytes. 4 bytes * 8 numbers = 32 bytes

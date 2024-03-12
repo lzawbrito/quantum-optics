@@ -2,6 +2,7 @@
 Based on https://egalvez.colgate.domains/pql/wp-content/uploads/2022/07/FreeRunning4DetectorsAlteraV2.txt.
 """
 
+import time
 import serial
 import numpy as np
 import configparser
@@ -22,26 +23,24 @@ WELCOME_STRING = r'''
 
 
 def get_user_input(path):
-    # TODO at some point should have some defaults, would be nice if uses 
-    # last input. use .ini or config or smth like that
-
     config = configparser.ConfigParser() 
 
     config.read(os.path.join(path, 'settings.ini'))
 
     default_settings = config['user_input']
 
-    prompts = [f'Data directory:\t\t\t',
-               f'Enter FPGA port ({default_settings['port']}):\t\t',
-               f'Number of intervals ({default_settings['n_intervals']}):\t\t', 
-               f'Time per interval (s) ({default_settings['dt']}):\t\t', 
-               f'Coincidence time (ns) ({default_settings['coinc_time']}):\t\t']
+    prompts = [
+               f'Enter FPGA port ({default_settings['port']}):\t\t\t\t',
+               f'Number of intervals ({default_settings['n_intervals']}):\t\t\t\t', 
+               f'Time per interval (s) ({default_settings['dt']}):\t\t\t\t', 
+               f'Coincidence time (ns) ({default_settings['coinc_time']}):\t\t\t\t']
     
-    user_settings = {'data_dir': '',
+    user_settings = {
                      'port' : '',
                      'n_intervals': '', 
                      'dt': '', 
-                     'coinc_time': ''}
+                     'coinc_time': ''
+                    }
 
     for prompt, setting in zip(prompts, user_settings.keys()): 
         user_input = input(prompt)
@@ -49,9 +48,42 @@ def get_user_input(path):
             user_input = default_settings[setting]
 
         user_settings[setting] = user_input
+
+    # Handle data directory input
+
+    overwrite = False
+
+    data_dir = ''
+    while not overwrite:  
+        default_dir = default_settings['data_dir']
+        default_dir= (default_dir[:15] + '...' + default_dir[-15:]) \
+                if len(default_dir) > 30 else default_dir
+
+        data_dir = input(f'Data directory ({default_dir}):\n>\t')
+        if data_dir == '': 
+            data_dir = default_settings['data_dir']
+        print()
+
+        if os.path.isdir(data_dir): 
+            # user_overwrite = '' 
+            user_overwrite = input(f'Directory {data_dir} already exists. ' + 
+                                    'Overwrite (y/[n])?\t').lower().replace(' ', '')
+            overwrite = True if user_overwrite == 'y' else False
+            # if we overwrite then we can just let python file object overwrite 
+            # contents of directory
+        else: 
+            try: 
+                os.mkdir(data_dir)
+            except FileNotFoundError: 
+                print(f'Error: could not create directory {data_dir}. ' + 
+                      'Are you sure all parent directories exist?')
+                continue
+            break
     
-    for key in user_settings.keys():
-        print(user_settings[key])
+    user_settings['data_dir'] = data_dir
+        
+    # for key in user_settings.keys():
+    #     print(user_settings[key])
 
     return user_settings
 
@@ -74,7 +106,7 @@ def encode7bit(int):
     return bytes_
 
 def clean_up_data(raw_data, data_len): 
-    tbi = raw_data.find(255) # TODO sometimes missing stop byte? multiple stop bytes?
+    tbi = raw_data.find(255) 
     # print(tbi)
     # Save to clean data array, starting from previous iteration's termination
     return raw_data[(tbi + 1):(tbi + data_len - 40)] 
@@ -84,6 +116,8 @@ def convert_counts(ser, time_interval):
     """..."""
 
     def convert_frame(length): # is frame right terminology?
+        # TODO HERE KIKO PAUSES FOR 1 SECOND
+        time.sleep(1)
         data_len = 41 * (length * 10) + 40 # time interval in tenths of seconds
 
         # this array stores the bytes received from the altera (valued 0-255).
@@ -147,26 +181,29 @@ if __name__ == '__main__':
     fpath = os.path.dirname(os.path.abspath(__file__))
     settings = get_user_input(fpath)
 
+    # save user settings. so this here so that if there's an error later no 
+    # need to retype
+    config = configparser.ConfigParser()
+    config['user_input'] = settings
+
+    with open(os.path.join(fpath, 'settings.ini'), 'w') as configfile:
+        config.write(configfile)
+
     print(f'\nBaudrate:\t\t{BAUDRATE} bps')
 
-    ser = serial.Serial(settings['port'], BAUDRATE, timeout=0,
-                         parity=serial.PARITY_EVEN, rtscts=1)
+    # ser = serial.Serial(settings['port'], BAUDRATE, timeout=0,
+    #                      parity=serial.PARITY_EVEN, rtscts=1)
 
     # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
     # n_measurements = n_intervals
     # (A, B, A', B', AB, AA', BB', A'B')
     results = np.zeros((int(settings['n_intervals']), 8), dtype=int)
 
-    for i in range(int(settings['n_intervals'])): 
-        results[i, :] = convert_counts(ser, float(settings['dt']))
+    # for i in range(int(settings['n_intervals'])): 
+    #     results[i, :] = convert_counts(ser, float(settings['dt']))
 
     np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
     np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i')
 
-    config = configparser.ConfigParser()
-    config['user_input'] = settings
-
-    with open(os.path.join(fpath, 'settings.ini'), 'w') as configfile:
-        config.write(configfile)
 
 
