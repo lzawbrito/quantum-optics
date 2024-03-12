@@ -197,7 +197,7 @@ if __name__ == '__main__':
     # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
     # n_measurements = n_intervals
     # (A, B, A', B', AB, AA', BB', A'B')
-    results = np.zeros((int(settings['n_intervals']), 8), dtype=int)
+    results = np.zeros((int(settings['n_intervals']), 8), dtype=np.int64)
 
     for i in range(int(settings['n_intervals'])): 
         results[i, :] = convert_counts(ser, float(settings['dt']))
