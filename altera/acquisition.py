@@ -191,16 +191,16 @@ if __name__ == '__main__':
 
     print(f'\nBaudrate:\t\t{BAUDRATE} bps')
 
-    # ser = serial.Serial(settings['port'], BAUDRATE, timeout=0,
-    #                      parity=serial.PARITY_EVEN, rtscts=1)
+    ser = serial.Serial(settings['port'], BAUDRATE, timeout=0,
+                         parity=serial.PARITY_EVEN, rtscts=1)
 
     # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
     # n_measurements = n_intervals
     # (A, B, A', B', AB, AA', BB', A'B')
     results = np.zeros((int(settings['n_intervals']), 8), dtype=int)
 
-    # for i in range(int(settings['n_intervals'])): 
-    #     results[i, :] = convert_counts(ser, float(settings['dt']))
+    for i in range(int(settings['n_intervals'])): 
+        results[i, :] = convert_counts(ser, float(settings['dt']))
 
     np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
     np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i')
