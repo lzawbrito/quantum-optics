@@ -21,6 +21,13 @@ WELCOME_STRING = r'''
        |_|                                |
 '''
 
+# https://itnext.io/overwrite-previously-printed-lines-4218a9563527
+def clear_line(n=1):
+    LINE_UP = '\033[1A'
+    LINE_CLEAR = '\x1b[2K'
+    for i in range(n):
+        print(LINE_UP, end=LINE_CLEAR)
+
 def create_settings_if_none(path): 
     if not os.path.isfile(os.path.join(path, 'settings.ini')):
         config = configparser.ConfigParser()
@@ -157,17 +164,21 @@ def convert_counts(ser, time_interval):
             # loop through time 
             for t in times:
                 count_from_data = decode_int(clean_data[(d + l + t):(d + l + t + 5)])
-                print(count_from_data)
                 counts[d] = counts[d] + count_from_data
 
             l += 4 # move forward 5 bytes for next detector pair (i.e., 4 indices)
         
+        clear_line(1)
+        out_string = ''
+        for c in counts: 
+            out_string += "{:.2e}, ".format(np.random.rand())
+
+        print(out_string) 
         return counts
         
     # We count differently depending on the time interval given. Minimum is 
     # 1 tenth of a second (ds), if greater than 10 tenths we split it into 10 ds groups.
     counts = np.zeros(8, dtype=np.int64) 
-
     if time_interval < 1: 
         counts += convert_frame(1)
     elif time_interval > 10: 
@@ -219,6 +230,8 @@ if __name__ == '__main__':
         # (A, B, A', B', AB, AA', BB', A'B')
         results = np.zeros((int(settings['n_intervals']), 8), dtype=np.int64)
 
+        print("A     B     A'    B'    AB    AA'   BB'   A'B'")
+        print("0     0     0     0     0     0     0     0")
         for i in range(int(settings['n_intervals'])): 
             results[i, :] = convert_counts(ser, float(settings['dt']))
 
