@@ -21,10 +21,24 @@ WELCOME_STRING = r'''
        |_|                                |
 '''
 
+def create_settings_if_none(path): 
+    if not os.path.isfile(path):
+        config = configparser.ConfigParser()
+        config['user_input'] = {
+            'port': 'COM8', 
+            'n_intervals': '1',
+            'dt': '1', 
+            'coinc_time': '40',
+            'data_dir': './data/'
+        }
+
+        with open(os.path.join(fpath, 'settings.ini'), 'w') as configfile:
+            config.write(configfile)
+
 
 def get_user_input(path):
-    config = configparser.ConfigParser() 
 
+    config = configparser.ConfigParser() 
     config.read(os.path.join(path, 'settings.ini'))
 
     default_settings = config['user_input']
@@ -179,6 +193,8 @@ def acc_coinc(a, b, coinc_time, dt, n_measures):
 if __name__ == '__main__':
     print(WELCOME_STRING)
     fpath = os.path.dirname(os.path.abspath(__file__))
+
+    create_settings_if_none(fpath)    
     settings = get_user_input(fpath)
 
     # save user settings. so this here so that if there's an error later no 
