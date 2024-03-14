@@ -195,31 +195,35 @@ if __name__ == '__main__':
     fpath = os.path.dirname(os.path.abspath(__file__))
 
     create_settings_if_none(fpath)    
-    settings = get_user_input(fpath)
+    running = True
 
-    # save user settings. so this here so that if there's an error later no 
-    # need to retype
-    config = configparser.ConfigParser()
-    config['user_input'] = settings
+    while running: 
+        settings = get_user_input(fpath)
 
-    with open(os.path.join(fpath, 'settings.ini'), 'w') as configfile:
-        config.write(configfile)
+        # save user settings. so this here so that if there's an error later no 
+        # need to retype
+        config = configparser.ConfigParser()
+        config['user_input'] = settings
 
-    print(f'\nBaudrate:\t\t{BAUDRATE} bps')
+        with open(os.path.join(fpath, 'settings.ini'), 'w') as configfile:
+            config.write(configfile)
 
-    ser = serial.Serial(settings['port'], BAUDRATE, timeout=0,
-                         parity=serial.PARITY_EVEN, rtscts=1)
+        print(f'\nBaudrate:\t\t{BAUDRATE} bps')
 
-    # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
-    # n_measurements = n_intervals
-    # (A, B, A', B', AB, AA', BB', A'B')
-    results = np.zeros((int(settings['n_intervals']), 8), dtype=np.int64)
+        ser = serial.Serial(settings['port'], BAUDRATE, timeout=0,
+                            parity=serial.PARITY_EVEN, rtscts=1)
 
-    for i in range(int(settings['n_intervals'])): 
-        results[i, :] = convert_counts(ser, float(settings['dt']))
+        # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
+        # n_measurements = n_intervals
+        # (A, B, A', B', AB, AA', BB', A'B')
+        results = np.zeros((int(settings['n_intervals']), 8), dtype=np.int64)
 
-    np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
-    np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i')
+        for i in range(int(settings['n_intervals'])): 
+            results[i, :] = convert_counts(ser, float(settings['dt']))
 
+        np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
+        np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i')
 
+        running = False if input('Run again (y/[n])?').lower().replace(' ', '') == 'y' \
+                        else True
 
