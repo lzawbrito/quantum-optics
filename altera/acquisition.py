@@ -139,8 +139,7 @@ def convert_counts(ser, time_interval):
     """..."""
 
     def convert_frame(length): # is frame right terminology?
-        # TODO HERE KIKO PAUSES FOR 1 SECOND
-        time.sleep(1)
+        # time.sleep(1)
         data_len = 41 * (length * 10) + 40 # time interval in tenths of seconds
 
         # this array stores the bytes received from the altera (valued 0-255).
@@ -173,11 +172,18 @@ def convert_counts(ser, time_interval):
         clear_line(1)
         out_string = ''
         for c in counts: 
-            out_string += "{:.2e}, ".format(c)
+            out_string += "{:.2e}  ".format(c)
 
         print(out_string) 
         return counts
-        
+    
+    ser.read(512)
+    time.sleep(1)
+    ser.flush()
+    ser.read(512)
+    ser.flush()
+
+
     # We count differently depending on the time interval given. Minimum is 
     # 1 tenth of a second (ds), if greater than 10 tenths we split it into 10 ds groups.
     counts = np.zeros(8, dtype=np.int64) 
@@ -232,8 +238,10 @@ if __name__ == '__main__':
         # (A, B, A', B', AB, AA', BB', A'B')
         results = np.zeros((int(settings['n_intervals']), 8), dtype=np.int64)
 
-        print("A     B     A'    B'    AB    AA'   BB'   A'B'")
-        print("0     0     0     0     0     0     0     0")
+        print("A         B         A'        B'        AB        AA'       BB'" + \
+              "       A'B'")
+        print("0         0         0         0         0         0         0" + \
+              "         0")
         for i in range(int(settings['n_intervals'])): 
             results[i, :] = convert_counts(ser, float(settings['dt']))
 
