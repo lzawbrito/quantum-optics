@@ -4,3 +4,4 @@ kiko-scripts/
 notes.md
 altera/data/
 altera/__pycache__
+altera/setting.ini
