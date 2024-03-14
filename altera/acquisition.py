@@ -7,6 +7,8 @@ import serial
 import numpy as np
 import configparser
 import os 
+os.system("")
+# https://stackoverflow.com/questions/12492810/python-how-can-i-make-the-ansi-escape-codes-to-work-also-in-windows
 
 BAUDRATE = 19200 
 
