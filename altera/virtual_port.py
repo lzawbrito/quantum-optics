@@ -19,9 +19,9 @@ try:
     ser.reset_input_buffer()
     ser.reset_output_buffer()
     while True:
-        time.sleep(0.01)
+        time.sleep(0.1)
 
-        counts = [np.random.randint(255, dtype='int32') for i in range(8)]
+        counts = [100_000 + np.random.randint(100) for i in range(8)]
         # print(counts)
         # int32 -> 4 bytes. 4 bytes * 8 numbers = 32 bytes
         # upon encoding this becomes 5 bytes * 8 numbers + 1 stop byte = 41 bytes.

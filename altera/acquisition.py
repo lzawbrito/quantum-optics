@@ -132,7 +132,7 @@ def convert_counts(ser, time_interval):
 
         # print(f'len(clean_data):\t{len(clean_data)}')
 
-        counts = np.zeros(8, dtype=int)
+        counts = np.zeros(8, dtype=np.int64)
 
         times = np.arange(0, 41 * length, 41)
         detector_pairs = np.arange(0, 8)
@@ -151,7 +151,7 @@ def convert_counts(ser, time_interval):
         
     # We count differently depending on the time interval given. Minimum is 
     # 1 tenth of a second (ds), if greater than 10 tenths we split it into 10 ds groups.
-    counts = np.zeros(8) 
+    counts = np.zeros(8, dtype=np.int64) 
 
     if time_interval < 1: 
         counts += convert_frame(1)
@@ -162,7 +162,7 @@ def convert_counts(ser, time_interval):
         # do remainder
         counts += convert_frame(int(time_interval % 10))
     else:
-        counts =+ convert_frame(int(time_interval))
+        counts += convert_frame(int(time_interval))
 
     return counts 
 
