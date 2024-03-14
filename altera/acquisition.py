@@ -171,7 +171,7 @@ def convert_counts(ser, time_interval):
         clear_line(1)
         out_string = ''
         for c in counts: 
-            out_string += "{:.2e}, ".format(np.random.rand())
+            out_string += "{:.2e}, ".format(c)
 
         print(out_string) 
         return counts
