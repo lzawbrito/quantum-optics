@@ -179,10 +179,9 @@ def convert_counts(ser, time_interval):
     
     ser.read(512)
     time.sleep(1)
-    ser.flush()
+    ser.reset_input_buffer()
     ser.read(512)
-    ser.flush()
-
+    ser.reser_input_buffer()
 
     # We count differently depending on the time interval given. Minimum is 
     # 1 tenth of a second (ds), if greater than 10 tenths we split it into 10 ds groups.
