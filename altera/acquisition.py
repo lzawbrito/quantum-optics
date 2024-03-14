@@ -22,7 +22,7 @@ WELCOME_STRING = r'''
 '''
 
 def create_settings_if_none(path): 
-    if not os.path.isfile(path):
+    if not os.path.isfile(os.path.join(path, 'settings.ini')):
         config = configparser.ConfigParser()
         config['user_input'] = {
             'port': 'COM8', 
@@ -32,7 +32,7 @@ def create_settings_if_none(path):
             'data_dir': './data/'
         }
 
-        with open(os.path.join(fpath, 'settings.ini'), 'w') as configfile:
+        with open(os.path.join(path, 'settings.ini'), 'w') as configfile:
             config.write(configfile)
 
 
