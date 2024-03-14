@@ -157,6 +157,7 @@ def convert_counts(ser, time_interval):
             # loop through time 
             for t in times:
                 count_from_data = decode_int(clean_data[(d + l + t):(d + l + t + 5)])
+                print(count_from_data)
                 counts[d] = counts[d] + count_from_data
 
             l += 4 # move forward 5 bytes for next detector pair (i.e., 4 indices)
