@@ -224,6 +224,8 @@ if __name__ == '__main__':
         np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
         np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i')
 
+        ser.close()
+
         running = True if input('Run again (y/[n])?').lower().replace(' ', '') == 'y' \
                         else False
 
