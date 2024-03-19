@@ -7,6 +7,7 @@ import serial
 import numpy as np
 import configparser
 import os 
+import struct
 os.system("")
 # https://stackoverflow.com/questions/12492810/python-how-can-i-make-the-ansi-escape-codes-to-work-also-in-windows
 
@@ -111,7 +112,7 @@ def get_user_input(path):
     return user_settings
 
 
-def decode_int(data): 
+def decode_int_5byte(data): 
     count = 0 
     i = 0
     for b in data: 
@@ -119,6 +120,8 @@ def decode_int(data):
         i += 1
     return count
 
+def decode_int(data): 
+    return struct.unpack('<I', data)[0]
 
 def encode7bit(int):
     bytes_ = []
@@ -164,7 +167,8 @@ def convert_counts(ser, time_interval):
         for d in detector_pairs: 
             # loop through time 
             for t in times:
-                count_from_data = decode_int(clean_data[(d + l + t):(d + l + t + 5)])
+                # count_from_data = decode_int_5yte(clean_data[(d + l + t):(d + l + t + 5)])
+                count_from_data = decode_int(clean_data[(d + l + t):(d + l + t + 4)])
                 counts[d] = counts[d] + count_from_data
 
             l += 4 # move forward 5 bytes for next detector pair (i.e., 4 indices)
@@ -177,14 +181,9 @@ def convert_counts(ser, time_interval):
         print(out_string) 
         return counts
     
-    # ser.read(512)
-    time.sleep(1)
-    # ser.reset_input_buffer()
-    # ser.read(512)
-    # ser.reset_input_buffer()
 
     # We count differently depending on the time interval given. Minimum is 
-    # 1 tenth of a second (ds), if greater than 10 tenths we split it into 10 ds groups.
+    # 0.1 second (ds), if greater than 1 sec we split it into 1 sec groups.
     counts = np.zeros(8, dtype=np.int64) 
     if time_interval < 1: 
         counts += convert_frame(1)
@@ -195,6 +194,7 @@ def convert_counts(ser, time_interval):
         # do remainder
         counts += convert_frame(int(time_interval % 10))
     else:
+        time.sleep(0.1)
         counts += convert_frame(int(time_interval))
 
     return counts 
