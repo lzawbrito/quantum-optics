@@ -120,8 +120,8 @@ def decode_int_5byte(data):
         i += 1
     return count
 
-def decode_int(data): 
-    return struct.unpack('<I', data)[0]
+# def decode_int(data): 
+#     return struct.unpack('<I', data)[0]
 
 def encode7bit(int):
     bytes_ = []
@@ -167,8 +167,8 @@ def convert_counts(ser, time_interval):
         for d in detector_pairs: 
             # loop through time 
             for t in times:
-                # count_from_data = decode_int_5yte(clean_data[(d + l + t):(d + l + t + 5)])
-                count_from_data = decode_int(clean_data[(d + l + t):(d + l + t + 4)])
+                # reverse of byte array
+                count_from_data = decode_int_5byte(clean_data[(d + l + t):(d + l + t + 5)][::-1])
                 counts[d] = counts[d] + count_from_data
 
             l += 4 # move forward 5 bytes for next detector pair (i.e., 4 indices)
