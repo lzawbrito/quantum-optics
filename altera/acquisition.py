@@ -164,6 +164,7 @@ def convert_counts(ser, time_interval):
 
         # loop through each detector pair (5 bytes each)
         l = 0
+        print(len(clean_data))
         for t in times:
         # loop through time 
 
