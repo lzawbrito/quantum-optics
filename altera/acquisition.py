@@ -170,7 +170,7 @@ def convert_counts(ser, time_interval):
             data_to_parse = clean_data[t:t+40][::-1] 
             for d in detector_pairs: 
                 # reverse of byte array
-                count_from_data = decode_int_5byte(data_to_parse[(l + t):(l + t + 5)])[::-1]
+                count_from_data = decode_int_5byte(data_to_parse[(l + t):(l + t + 5)])
                 counts[d] = counts[d] + count_from_data
 
                 l += 5 # move forward 5 bytes for next detector pair
