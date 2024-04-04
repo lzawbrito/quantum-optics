@@ -169,6 +169,7 @@ def convert_counts(ser, time_interval):
 
             data_to_decode = clean_data[t:(t + 40)]
             print(len(data_to_decode))
+            print()
             # should be 5 * 8 = 40 bytes. Also reverse
             for d in detector_pairs: 
                 # reverse of byte array
