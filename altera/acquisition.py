@@ -166,13 +166,14 @@ def convert_counts(ser, time_interval):
         l = 0
         for t in times:
         # loop through time 
-            data_to_parse = clean_data[t:t+41][::-1]
+            # should be 5 * 8 = 40 bytes. Also reverse
+            data_to_parse = clean_data[t:t+40][::-1] 
             for d in detector_pairs: 
                 # reverse of byte array
-                count_from_data = decode_int_5byte(data_to_parse[(l + t):(l + t + 5)])
+                count_from_data = decode_int_5byte(data_to_parse[(l + t):(l + t + 5)])[::-1]
                 counts[d] = counts[d] + count_from_data
 
-                l += 5 # move forward 5 bytes for next detector pair (i.e., 4 indices)
+                l += 5 # move forward 5 bytes for next detector pair
         
         clear_line(1)
         out_string = ''
