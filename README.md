@@ -8,3 +8,5 @@
 - Upload the compiled code to the board with `upload -p [port] --fqbn arduino:avr:uno [sketch name]`. `[port]` is the port your arduino is 
   connected to, should be listed when you use arduino-cli board list.
 - Arduino LED should flash for a bit and then sketch is uploaded.
+
+

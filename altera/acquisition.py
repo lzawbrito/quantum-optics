@@ -245,7 +245,7 @@ if __name__ == '__main__':
             results[i, :] = convert_counts(ser, float(settings['dt']))
 
         np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
-        np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i')
+        np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i', header="A   B   A'  B'  AB  AA'  BB'  A'B'")
 
         ser.close()
 
