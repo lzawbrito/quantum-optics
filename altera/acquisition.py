@@ -167,10 +167,11 @@ def convert_counts(ser, time_interval):
         for t in times:
         # loop through time 
             # should be 5 * 8 = 40 bytes. Also reverse
-            data_to_parse = clean_data[t:t+40][::-1] 
             for d in detector_pairs: 
                 # reverse of byte array
-                count_from_data = decode_int_5byte(data_to_parse[(l + t):(l + t + 5)])
+                data_to_decode = clean_data[(l + t):(l + t + 5 - 1)][::-1]
+                print(len(data_to_decode))
+                count_from_data = decode_int_5byte(data_to_decode)
                 counts[d] = counts[d] + count_from_data
 
                 l += 5 # move forward 5 bytes for next detector pair
