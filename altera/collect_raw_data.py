@@ -14,6 +14,6 @@ while i < max_iter:
 
 
 f = open(fname, 'w')
-f.write(bstring)
+f.write(str(bytes(bstring)))
 f.close()
 
