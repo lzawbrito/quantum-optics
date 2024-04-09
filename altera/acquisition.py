@@ -164,7 +164,7 @@ def convert_counts(ser, time_interval):
 
         # loop through each detector pair (5 bytes each)
         l = 0
-        print(len(clean_data))
+        print(len(clean_data)) # <--- this is 23 for some reason
         for t in times:
         # loop through time 
 
@@ -235,8 +235,7 @@ if __name__ == '__main__':
 
         print(f'\nBaudrate:\t\t{BAUDRATE} bps')
 
-        ser = serial.Serial(settings['port'], BAUDRATE, timeout=0,
-                            parity=serial.PARITY_EVEN, rtscts=1)
+        ser = serial.Serial(settings['port'], BAUDRATE, timeout=0, rtscts=1)
 
         # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
         # n_measurements = n_intervals
