@@ -1,9 +1,9 @@
 import serial 
 import time 
 
-fname = 'C:\Users\student\Desktop\quantum-optics\\raw_altera_data.txt'
+fname = 'C:\\Users\\student\\Desktop\\quantum-optics\\raw_altera_data.txt'
 
-bstring = ''
+bstring = bytearray()
 max_iter = 10
 i = 0 
 ser = serial.Serial('COM8', 19200, timeout=0, rtscts=1)
