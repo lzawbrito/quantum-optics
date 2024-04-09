@@ -235,7 +235,7 @@ if __name__ == '__main__':
 
         print(f'\nBaudrate:\t\t{BAUDRATE} bps')
 
-        ser = serial.Serial(settings['port'], BAUDRATE, timeout=0, rtscts=1)
+        ser = serial.Serial(settings['port'], BAUDRATE, timeout=0)
 
         # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
         # n_measurements = n_intervals
