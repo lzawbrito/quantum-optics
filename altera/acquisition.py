@@ -191,17 +191,17 @@ def convert_counts(ser, time_interval):
     # 0.1 second (ds), if greater than 1 sec we split it into 1 sec groups.
     counts = np.zeros(8, dtype=np.int64) 
     if time_interval < 1: 
-        time.sleep(0.1)
+        time.sleep(1)
         counts += convert_frame(1)
     elif time_interval > 10: 
         for i in range(int(time_interval / 10)):
-            time.sleep(0.1)
+            time.sleep(1)
             counts += convert_frame(10) 
         
         # do remainder
         counts += convert_frame(int(time_interval % 10))
     else:
-        time.sleep(0.1)
+        time.sleep(1)
         counts += convert_frame(int(time_interval))
 
     return counts 
