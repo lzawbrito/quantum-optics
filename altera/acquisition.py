@@ -165,17 +165,15 @@ def convert_counts(ser, time_interval):
         # loop through each detector pair (5 bytes each)
         l = 0
         print(len(clean_data))
-        for t in times:
-        # loop through time 
 
+        # loop through time 
+ 
+        for t in times:
+            # should be 5 * 8 = 40 bytes. 
             data_to_decode = clean_data[t:(t + 40)]
-            print(len(data_to_decode))
-            print()
-            # should be 5 * 8 = 40 bytes. Also reverse
             for d in detector_pairs: 
                 # reverse of byte array
-                print(data_to_decode)
-                count_from_data = decode_int_5byte(data_to_decode[l:l+5])
+                count_from_data = decode_int_5byte(data_to_decode[l:l+5][::-1])
                 counts[d] = counts[d] + count_from_data
 
                 l += 5 # move forward 5 bytes for next detector pair
@@ -193,9 +191,11 @@ def convert_counts(ser, time_interval):
     # 0.1 second (ds), if greater than 1 sec we split it into 1 sec groups.
     counts = np.zeros(8, dtype=np.int64) 
     if time_interval < 1: 
+        time.sleep(0.1)
         counts += convert_frame(1)
     elif time_interval > 10: 
         for i in range(int(time_interval / 10)):
+            time.sleep(0.1)
             counts += convert_frame(10) 
         
         # do remainder
