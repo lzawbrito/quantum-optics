@@ -153,29 +153,36 @@ def convert_counts(ser, time_interval):
 
         # Find termination byte (255) index 
         clean_data = clean_up_data(raw_data, data_len)
-        # print(clean_data)
+        print("clean", len(clean_data))
 
         # print(f'len(clean_data):\t{len(clean_data)}')
 
         counts = np.zeros(8, dtype=np.int64)
 
-        times = np.arange(0, 41 * length, 41)
+        times = np.arange(0, 41 * length * 10, 41)
+        print(length)
+        print(41*length*10)
+        print(times)  
+        print(times[-1])
+        print()
         detector_pairs = np.arange(0, 8)
 
         # loop through each detector pair (5 bytes each)
-        l = 0
-        print(len(clean_data))
 
         # loop through time 
  
         for t in times:
+            print('t', t)
             # should be 5 * 8 = 40 bytes. 
             data_to_decode = clean_data[t:(t + 40)]
+            print("data_to_decode", data_to_decode)
+            l = 0
             for d in detector_pairs: 
                 # reverse of byte array
-                count_from_data = decode_int_5byte(data_to_decode[l:l+5])
+                count_from_data = decode_int_5byte(data_to_decode[l:l + 5])
                 counts[d] = counts[d] + count_from_data
-
+                print("counts", counts[d])
+                print("counts from data", count_from_data)
                 l += 5 # move forward 5 bytes for next detector pair
         
         clear_line(1)
@@ -196,7 +203,7 @@ def convert_counts(ser, time_interval):
     elif time_interval > 10: 
         for i in range(int(time_interval / 10)):
             time.sleep(1)
-            counts += convert_frame(10) 
+            counts += convert_frame(1) 
         
         # do remainder
         counts += convert_frame(int(time_interval % 10))
