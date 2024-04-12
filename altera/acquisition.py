@@ -153,18 +153,12 @@ def convert_counts(ser, time_interval):
 
         # Find termination byte (255) index 
         clean_data = clean_up_data(raw_data, data_len)
-        print("clean", len(clean_data))
 
         # print(f'len(clean_data):\t{len(clean_data)}')
 
         counts = np.zeros(8, dtype=np.int64)
 
         times = np.arange(0, 41 * length * 10, 41)
-        print(length)
-        print(41*length*10)
-        print(times)  
-        print(times[-1])
-        print()
         detector_pairs = np.arange(0, 8)
 
         # loop through each detector pair (5 bytes each)
@@ -172,23 +166,22 @@ def convert_counts(ser, time_interval):
         # loop through time 
  
         for t in times:
-            print('t', t)
             # should be 5 * 8 = 40 bytes. 
             data_to_decode = clean_data[t:(t + 40)]
-            print("data_to_decode", data_to_decode)
             l = 0
             for d in detector_pairs: 
                 # reverse of byte array
                 count_from_data = decode_int_5byte(data_to_decode[l:l + 5])
-                counts[d] = counts[d] + count_from_data
-                print("counts", counts[d])
-                print("counts from data", count_from_data)
+                counts[d] = counts[d] + 10 * count_from_data
                 l += 5 # move forward 5 bytes for next detector pair
         
         clear_line(1)
         out_string = ''
         for c in counts: 
-            out_string += "{:.2e}  ".format(c)
+            if c > 1e7:
+                out_string += "{:.2e}  ".format(c)
+            else: 
+                out_string += str(c).ljust(8) + "  "
 
         print(out_string) 
         return counts
