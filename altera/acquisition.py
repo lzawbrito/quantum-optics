@@ -208,7 +208,7 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
     results[i, :] = counts
     times.append(i)
     if ax: 
-        print(range(times[i]))
+        print(range(times[i] + 1))
         print(results[0:(i + 1), 1])
         print()
         # ax.plot(range(times[i]), results[0:(i + 1), 1])
