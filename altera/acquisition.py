@@ -206,13 +206,10 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
         counts += convert_frame(int(time_interval))
 
     results[i, :] = counts
-    times.append(i)
     if ax: 
-        print(times)
-        # print(results)
-        print(results[0:(i+1), 1])
-        print()
-        # ax.plot(times, results[0:(i + 1), 1])
+        print(range(times[i]))
+        print(results[0:(i + 1), 1])
+        # ax.plot(range(times[i]), results[0:(i + 1), 1])
     
     if i > np.shape(results)[1]: 
         plt.close()
