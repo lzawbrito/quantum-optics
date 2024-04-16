@@ -162,14 +162,14 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
         times = np.arange(0, 41 * length * 10, 41)
         detector_pairs = np.arange(0, 8)
 
-        # loop through each detector pair (5 bytes each)
 
         # loop through time 
- 
         for t in times:
             # should be 5 * 8 = 40 bytes. 
             data_to_decode = clean_data[t:(t + 40)]
             l = 0
+
+            # loop through each detector pair (5 bytes each)
             for d in detector_pairs: 
                 # reverse of byte array
                 count_from_data = decode_int_5byte(data_to_decode[l:l + 5])
@@ -185,8 +185,6 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
                 out_string += str(c).ljust(8) + "  "
         print(out_string) 
 
-    
-        
         return counts
     
 
@@ -211,7 +209,7 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
     times.append(i)
     if ax: 
         print(times)
-        print(results)
+        # print(results)
         print(results[0:(i+1), 1])
         print()
         ax.plot(times, results[0:(i + 1), 1])
