@@ -207,8 +207,11 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
 
     results[i, :] = counts
     if ax: 
+        print(i)
+        print(times[i])
         print(range(times[i]))
         print(results[0:(i + 1), 1])
+        print()
         # ax.plot(range(times[i]), results[0:(i + 1), 1])
     
     if i > np.shape(results)[1]: 
