@@ -213,6 +213,9 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
         print(results[0:(i+1), 1])
         print()
         # ax.plot(times, results[0:(i + 1), 1])
+    
+    if i > np.shape(results)[1]: 
+        plt.close()
     # return counts 
 
 
@@ -233,13 +236,15 @@ def acquire_data(ser, t_int, n_ints):
     # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
     # n_measurements = n_intervals
     # (A, B, A', B', AB, AA', BB', A'B')
-    results = np.zeros((int(settings['n_intervals']), 8), dtype=np.int64)
+    results = np.zeros((n_ints, 8), dtype=np.int64)
 
     anim = animation.FuncAnimation(fig, convert_counts, 
                             fargs=(ser, t_int, results, times, ax), frames=range(n_ints))
     # for i in range(n_ints): 
     #     results[i, :] = convert_counts(ser, t_int, n_ints)
     plt.show()
+    # two issues: (1) initializes and then there's two 0 values at first. 
+    #             (2) plot will keep looping frames
     return results 
 
 
