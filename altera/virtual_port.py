@@ -2,12 +2,15 @@ import serial
 import struct
 import time
 import numpy as np
+import argparse
 from acquisition import encode7bit
 
-# Define the virtual serial port name
-serial_port = input('Port: ')
-if serial_port == '': 
-    serial_port = '/dev/ttys013'
+parser = argparse.ArgumentParser()
+parser.add_argument('-p', '--port')      
+
+args = parser.parse_args()
+serial_port = args.port
+
 
 # Open the virtual serial port
 ser = serial.Serial(serial_port, baudrate=19200)

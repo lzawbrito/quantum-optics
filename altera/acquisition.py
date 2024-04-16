@@ -1,7 +1,8 @@
 """
 Based on https://egalvez.colgate.domains/pql/wp-content/uploads/2022/07/FreeRunning4DetectorsAlteraV2.txt.
 """
-
+import matplotlib.pyplot as plt 
+import matplotlib.animation as animation
 import time
 import serial
 import numpy as np
@@ -138,7 +139,7 @@ def clean_up_data(raw_data, data_len):
     return raw_data[(tbi + 1):(tbi + data_len - 40)] 
 
 
-def convert_counts(ser, time_interval): 
+def convert_counts(i, ser, time_interval, results, times, ax=None): 
     """..."""
 
     def convert_frame(length): # is frame right terminology?
@@ -182,8 +183,10 @@ def convert_counts(ser, time_interval):
                 out_string += "{:.2e}  ".format(c)
             else: 
                 out_string += str(c).ljust(8) + "  "
-
         print(out_string) 
+
+    
+        
         return counts
     
 
@@ -204,7 +207,11 @@ def convert_counts(ser, time_interval):
         time.sleep(1)
         counts += convert_frame(int(time_interval))
 
-    return counts 
+    results[i, :] = counts
+    times.append(i)
+    if ax: 
+        ax.plot(times, results[:, 1])
+    # return counts 
 
 
 def acc_coinc(a, b, coinc_time, dt, n_measures):
@@ -214,6 +221,22 @@ def acc_coinc(a, b, coinc_time, dt, n_measures):
 
     # calculate the accidental coincidences (kiko ln 499) 
     return np.sum(a) * np.sum(b) * coinc_time * 10e-9 / (n_measures * dt)
+
+
+def acquire_data(ser, t_int, n_ints): 
+    fig, ax = plt.subplots() 
+    # TODO set up axes and stuff
+    times = []
+
+    # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
+    # n_measurements = n_intervals
+    # (A, B, A', B', AB, AA', BB', A'B')
+    results = np.zeros((int(settings['n_intervals']), 8), dtype=np.int64)
+
+    animation.FuncAnimation(fig, convert_counts, 
+                            fargs=(ser, t_int, results, times, ax), frames=range(n_ints))
+    # for i in range(n_ints): 
+    #     results[i, :] = convert_counts(ser, t_int, n_ints)
 
 
 if __name__ == '__main__':
@@ -238,20 +261,17 @@ if __name__ == '__main__':
 
         ser = serial.Serial(settings['port'], BAUDRATE, timeout=0)
 
-        # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
-        # n_measurements = n_intervals
-        # (A, B, A', B', AB, AA', BB', A'B')
-        results = np.zeros((int(settings['n_intervals']), 8), dtype=np.int64)
 
         print("A         B         A'        B'        AB        AA'       BB'" + \
               "       A'B'")
         print("0         0         0         0         0         0         0" + \
               "         0")
-        for i in range(int(settings['n_intervals'])): 
-            results[i, :] = convert_counts(ser, float(settings['dt']))
+        
+        results = acquire_data(ser, int(settings['n_intervals']))
 
         np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
-        np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i', header="A   B   A'  B'  AB  AA'  BB'  A'B'")
+        np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i', 
+                    header="A B A' B' AB AA' BB' A'B'")
 
         ser.close()
 
