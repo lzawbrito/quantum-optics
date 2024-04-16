@@ -212,7 +212,7 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
         # print(results)
         print(results[0:(i+1), 1])
         print()
-        ax.plot(times, results[0:(i + 1), 1])
+        # ax.plot(times, results[0:(i + 1), 1])
     # return counts 
 
 
