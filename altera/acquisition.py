@@ -267,7 +267,7 @@ if __name__ == '__main__':
         print("0         0         0         0         0         0         0" + \
               "         0")
         
-        results = acquire_data(ser, int(settings['n_intervals']))
+        results = acquire_data(ser, int(settings['dt']), int(settings['n_intervals']))
 
         np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
         np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i', 
