@@ -237,6 +237,7 @@ def acquire_data(ser, t_int, n_ints):
                             fargs=(ser, t_int, results, times, ax), frames=range(n_ints))
     # for i in range(n_ints): 
     #     results[i, :] = convert_counts(ser, t_int, n_ints)
+    plt.show()
     return results 
 
 
