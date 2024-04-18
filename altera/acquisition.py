@@ -13,6 +13,7 @@ os.system("")
 # https://stackoverflow.com/questions/12492810/python-how-can-i-make-the-ansi-escape-codes-to-work-also-in-windows
 
 BAUDRATE = 19200 
+DETECTORS = ["A", "B", "A'", "B'", "AB", "AA'", "BB'", "A'B'"]
 
 WELCOME_STRING = r'''
    ___                _                   | 
@@ -139,6 +140,21 @@ def clean_up_data(raw_data, data_len):
     return raw_data[(tbi + 1):(tbi + data_len - 40)] 
 
 
+def update_plot(i, times, results, ax): 
+    for a in ax: 
+        a.clear()
+    ax[0].plot(range(times[i] + 1), results[0:(times[i] + 1), 0:4], label=DETECTORS[0:4])
+    ax[0].legend(loc='center left', bbox_to_anchor=(0, 0.5))
+
+    ax[1].plot(range(times[i] + 1), results[0:(times[i] + 1), 4:], label=DETECTORS[4:])
+
+    ax[0].set_xlabel('Time')
+    ax[0].set_ylabel('Counts')
+    ax[1].set_ylabel('Counts')
+
+    return None 
+
+
 def convert_counts(i, ser, time_interval, results, times, ax=None): 
     """..."""
 
@@ -173,7 +189,7 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
             for d in detector_pairs: 
                 # reverse of byte array
                 count_from_data = decode_int_5byte(data_to_decode[l:l + 5])
-                counts[d] = counts[d] + 10 * count_from_data
+                counts[d] = counts[d] + count_from_data
                 l += 5 # move forward 5 bytes for next detector pair
         
         clear_line(1)
@@ -207,14 +223,11 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
 
     results[i, :] = counts
     times.append(i)
-    if ax: 
-        # print(range(times[i] + 1))
-        # print(results[0:times[i]+ 1, 1])
-        # print()
-        ax.plot(range(times[i] + 1), results[0:(times[i] + 1), 1])
+    if ax is not None: 
+        update_plot(i, times, results, ax)
     
     if i > np.shape(results)[1]: 
-        plt.close()
+        plt.close() # if you close it here it's going to error 
     # return counts 
 
 
@@ -228,7 +241,8 @@ def acc_coinc(a, b, coinc_time, dt, n_measures):
 
 
 def acquire_data(ser, t_int, n_ints): 
-    fig, ax = plt.subplots() 
+    # Create plot 
+    fig, ax = plt.subplots(nrows=2) 
     # TODO set up axes and stuff
     times = []
 
@@ -269,7 +283,7 @@ if __name__ == '__main__':
 
         ser = serial.Serial(settings['port'], BAUDRATE, timeout=0)
 
-
+        # todo can make one 'detectors' array and join all these string together
         print("A         B         A'        B'        AB        AA'       BB'" + \
               "       A'B'")
         print("0         0         0         0         0         0         0" + \
