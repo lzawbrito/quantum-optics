@@ -147,6 +147,7 @@ def update_plot(i, times, results, ax):
     ax[0].legend(loc='center left', bbox_to_anchor=(0, 0.5))
 
     ax[1].plot(range(times[i] + 1), results[0:(times[i] + 1), 4:], label=DETECTORS[4:])
+    ax[1].legend(loc='center left', bbox_to_anchor=(0, 0.5))
 
     ax[0].set_ylabel('Counts')
     ax[1].set_xlabel('Time')
@@ -170,8 +171,6 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
 
         # Find termination byte (255) index 
         clean_data = clean_up_data(raw_data, data_len)
-
-        # print(f'len(clean_data):\t{len(clean_data)}')
 
         counts = np.zeros(8, dtype=np.int64)
 
