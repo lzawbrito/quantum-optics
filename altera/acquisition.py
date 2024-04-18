@@ -148,8 +148,8 @@ def update_plot(i, times, results, ax):
 
     ax[1].plot(range(times[i] + 1), results[0:(times[i] + 1), 4:], label=DETECTORS[4:])
 
-    ax[0].set_xlabel('Time')
     ax[0].set_ylabel('Counts')
+    ax[1].set_xlabel('Time')
     ax[1].set_ylabel('Counts')
 
     return None 
