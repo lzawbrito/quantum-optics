@@ -69,7 +69,7 @@ def get_user_input(path):
                      'n_intervals': '', 
                      'dt': '', 
                      'coinc_time': '',
-                     'gui': True,
+                     'gui': False,
                      'idle': False,
                     }
 
