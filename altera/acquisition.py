@@ -41,7 +41,9 @@ def create_settings_if_none(path):
             'n_intervals': '1',
             'dt': '1', 
             'coinc_time': '40',
-            'data_dir': './data/'
+            'data_dir': './data/',
+            'gui': True,
+            'idle': False,
         }
 
         with open(os.path.join(path, 'settings.ini'), 'w') as configfile:
@@ -160,7 +162,6 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
     """..."""
 
     def convert_frame(length): # is frame right terminology?
-        # time.sleep(1)
         data_len = 41 * (length * 10) + 40 # time interval in tenths of seconds
 
         # this array stores the bytes received from the altera (valued 0-255).
@@ -239,9 +240,11 @@ def acc_coinc(a, b, coinc_time, dt, n_measures):
     return np.sum(a) * np.sum(b) * coinc_time * 10e-9 / (n_measures * dt)
 
 
-def acquire_data(ser, t_int, n_ints): 
+def acquire_data(ser, t_int, n_ints, gui, idle): 
     # Create plot 
     fig, ax = plt.subplots(nrows=2) 
+    if not gui: 
+        ax = None
     # TODO set up axes and stuff
     times = []
 
@@ -250,11 +253,18 @@ def acquire_data(ser, t_int, n_ints):
     # (A, B, A', B', AB, AA', BB', A'B')
     results = np.zeros((n_ints, 8), dtype=np.int64)
 
-    anim = animation.FuncAnimation(fig, convert_counts, 
-                            fargs=(ser, t_int, results, times, ax), frames=range(n_ints))
-    # for i in range(n_ints): 
-    #     results[i, :] = convert_counts(ser, t_int, n_ints)
-    plt.show()
+    if gui:
+        anim = animation.FuncAnimation(fig, convert_counts, 
+                                fargs=(ser, t_int, results, times, ax), frames=range(n_ints))
+
+    i = 0
+
+    while i < n_ints:
+        results[i, :] = convert_counts(ser, t_int, n_ints)
+        i += 1
+
+    if gui: 
+        plt.show()
     # two issues: (1) initializes and then there's two 0 values at first. 
     #             (2) plot will keep looping frames
     return results 
