@@ -301,7 +301,7 @@ if __name__ == '__main__':
         results = acquire_data(ser, int(settings['dt']), 
                                     int(settings['n_intervals']),
                                     settings['gui'],
-                                settings['idle'])
+                                    settings['idle'])
 
         np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
         np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i', 
