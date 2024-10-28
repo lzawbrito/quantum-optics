@@ -264,7 +264,7 @@ def acquire_data(ser, t_int, n_ints, gui, idle):
 
     times = [] 
     while i < n_ints:
-        convert_counts(i, ser, results, times)
+        convert_counts(i, ser, t_int, results, times)
         i += 1
 
     if gui: 
