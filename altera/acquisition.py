@@ -68,7 +68,9 @@ def get_user_input(path):
                      'port' : '',
                      'n_intervals': '', 
                      'dt': '', 
-                     'coinc_time': ''
+                     'coinc_time': '',
+                     'gui': True,
+                     'idle': False,
                     }
 
     for prompt, setting in zip(prompts, user_settings.keys()): 
