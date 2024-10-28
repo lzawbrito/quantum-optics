@@ -302,7 +302,7 @@ if __name__ == '__main__':
         print("0         0         0         0         0         0         0" + \
               "         0")
         
-        results = acquire_data(ser, int(settings['dt']), 
+        results = acquire_data(ser, float(settings['dt']), 
                                     int(settings['n_intervals']),
                                     settings['gui'],
                                     settings['idle'])
