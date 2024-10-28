@@ -35,6 +35,7 @@ def clear_line(n=1):
 
 def create_settings_if_none(path): 
     if not os.path.isfile(os.path.join(path, 'settings.ini')):
+        print('Missing settings.ini, created new.')
         config = configparser.ConfigParser()
         config['user_input'] = {
             'port': 'COM8', 
