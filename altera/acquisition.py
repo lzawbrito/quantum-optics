@@ -161,7 +161,7 @@ def update_plot(i, times, results, ax):
     return None 
 
 
-def convert_counts(i, ser, time_interval, results, times, ax=None): 
+def convert_counts(i, ser, time_interval, results, times, idle, ax=None): 
     """..."""
 
     def convert_frame(length): # is frame right terminology?
@@ -224,14 +224,15 @@ def convert_counts(i, ser, time_interval, results, times, ax=None):
         time.sleep(1)
         counts += convert_frame(int(time_interval))
 
-    results[i, :] = counts
-    times.append(i)
+    if not idle:
+        results[i, :] = counts
+        times.append(i)
+
     if ax is not None: 
         update_plot(i, times, results, ax)
     
     if i > np.shape(results)[1]: 
         plt.close() # if you close it here it's going to error 
-    # return counts 
 
 
 def acc_coinc(a, b, coinc_time, dt, n_measures):
@@ -254,6 +255,7 @@ def acquire_data(ser, t_int, n_ints, gui, idle):
     # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
     # n_measurements = n_intervals
     # (A, B, A', B', AB, AA', BB', A'B')
+
     results = np.zeros((n_ints, 8), dtype=np.int64)
 
     if gui:
@@ -263,8 +265,8 @@ def acquire_data(ser, t_int, n_ints, gui, idle):
     i = 0
 
     times = [] 
-    while i < n_ints:
-        convert_counts(i, ser, t_int, results, times)
+    while i < n_ints or idle:
+        convert_counts(i, ser, t_int, results, times, idle)
         i += 1
 
     if gui: 
