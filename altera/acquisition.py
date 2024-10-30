@@ -44,7 +44,7 @@ def create_settings_if_none(path):
             'coinc_time': '40',
             'data_dir': './data/',
             'gui': True,
-            'idle': False,
+            'idle': True,
         }
 
         with open(os.path.join(path, 'settings.ini'), 'w') as configfile:
@@ -70,7 +70,7 @@ def get_user_input(path):
                      'dt': '', 
                      'coinc_time': '',
                      'gui': False,
-                     'idle': False,
+                     'idle': True,
                     }
 
     for prompt, setting in zip(prompts, user_settings.keys()): 
@@ -78,6 +78,9 @@ def get_user_input(path):
         if user_input == '': 
             user_input = default_settings[setting]
 
+        if user_settings['idle'] and setting == 'n_intervals':
+            print('Idle mode is on. Program will run until stopped by user.')
+            continue
         user_settings[setting] = user_input
 
     # Handle data directory input
