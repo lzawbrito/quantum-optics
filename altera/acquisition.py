@@ -80,7 +80,9 @@ def get_user_input(path):
 
         if user_settings['idle'] and setting == 'n_intervals':
             print('Idle mode is on. Program will run until stopped by user.')
+            user_settings[setting] = '0'
             continue
+
         user_settings[setting] = user_input
 
     # Handle data directory input
