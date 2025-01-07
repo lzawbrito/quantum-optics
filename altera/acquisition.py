@@ -16,15 +16,19 @@ BAUDRATE = 19200
 DETECTORS = ["A", "B", "A'", "B'", "AB", "AA'", "BB'", "A'B'"]
 
 WELCOME_STRING = r'''
-   ___                _                   | 
-  / _ \ _  _ __ _ _ _| |_ _  _ _ __       |  github.com/lzawbrito/quantum-optics
- | (_) | || / _` | ' \  _| || | '  \      |  
-  \__\_\\_,_\__,_|_||_\__|\_,_|_|_|_|     |  Instructional labs @ Brown U.
-  / _ \ _ __| |_(_)__ ___                 |  Department of Physics.
- | (_) | '_ \  _| / _(_-<  Acquisition    |      
-  \___/| .__/\__|_\__/__/  software v0.0  |  Author: Lucas Z. Brito
-       |_|                                |
+╔═════════════════════════════════════════╤══════════════════════════════════════╗
+║   ___                _                  │                                      ║
+║  / _ \ _  _ __ _ _ _| |_ _  _ _ __      │ github.com/lzawbrito/quantum-optics  ║
+║ | (_) | || / _` | ' \  _| || | '  \     │                                      ║
+║  \__\_\\_,_\__,_|_||_\__|\_,_|_|_|_|    │ Instructional labs @ Brown U.        ║
+║  / _ \ _ __| |_(_)__ ___                │ Department of Physics.               ║
+║ | (_) | '_ \  _| / _(_-<  Acquisition   │                                      ║
+║  \___/| .__/\__|_\__/__/  software v0.1 │ Author: Lucas Z. Brito               ║
+║       |_|                               │                                      ║
+╚═════════════════════════════════════════╧══════════════════════════════════════╝ 
 '''
+
+
 
 # https://itnext.io/overwrite-previously-printed-lines-4218a9563527
 def clear_line(n=1):
