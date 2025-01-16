@@ -74,7 +74,7 @@ def get_user_input(path):
                      'dt': '', 
                      'coinc_time': '',
                      'gui': False,
-                     'idle': True,
+                     'idle': False
                     }
 
     for prompt, setting in zip(prompts, user_settings.keys()): 

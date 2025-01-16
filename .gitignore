@@ -5,3 +5,11 @@ notes.md
 altera/data/
 altera/__pycache__
 altera/settings.ini
+*.aux
+*.log
+*.maf 
+*.mtc 
+*.mtc0
+*.synctex.*
+*.synctex(busy)
+*.toc
