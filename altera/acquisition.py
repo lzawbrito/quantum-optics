@@ -105,18 +105,18 @@ def get_user_input(path):
             data_dir = default_settings['data_dir']
         print()
 
-        if os.path.isdir(data_dir): 
+        if os.path.isfile(data_dir): 
             # user_overwrite = '' 
-            user_overwrite = input(f'Directory {data_dir} already exists. ' + 
+            user_overwrite = input(f'File {data_dir} already exists. ' + 
                                     'Overwrite (y/[n])?\t').lower().replace(' ', '')
             overwrite = True if user_overwrite == 'y' else False
             # if we overwrite then we can just let python file object overwrite 
             # contents of directory
         else: 
             try: 
-                os.mkdir(data_dir)
+                np.savetxt(data_dir, [])
             except FileNotFoundError: 
-                print(f'Error: could not create directory {data_dir}. ' + 
+                print(f'Error: could not create file {data_dir}. ' + 
                       'Are you sure all parent directories exist?')
                 continue
             break
@@ -319,8 +319,8 @@ if __name__ == '__main__':
                                     settings['gui'],
                                     settings['idle'])
 
-        np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
-        np.savetxt(os.path.join(settings['data_dir'], 'test.txt'), results, fmt='%i', 
+        # np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
+        np.savetxt(settings['data_dir'], results, fmt='%i', 
                     header="A B A' B' AB AA' BB' A'B'")
 
         ser.close()
