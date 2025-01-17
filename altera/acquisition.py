@@ -1,5 +1,10 @@
 """
 Based on https://egalvez.colgate.domains/pql/wp-content/uploads/2022/07/FreeRunning4DetectorsAlteraV2.txt.
+
+todo: 
+[ ] fix idle overwritten by settings/do settings things more carefully 
+[ ] on filename prompt instead of paren fill out the previous dir
+[ ] progress bar
 """
 import matplotlib.pyplot as plt 
 import matplotlib.animation as animation
