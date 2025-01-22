@@ -33,7 +33,11 @@ WELCOME_STRING = r'''
 ╚═════════════════════════════════════════╧══════════════════════════════════════╝ 
 '''
 
-
+def str2bool(string):
+    if string.lower() == 'true':
+        return True
+    else:
+        return False
 
 # https://itnext.io/overwrite-previously-printed-lines-4218a9563527
 def clear_line(n=1):
@@ -53,7 +57,7 @@ def create_settings_if_none(path):
             'coinc_time': '40',
             'data_dir': './data/',
             'gui': True,
-            'idle': True,
+            'idle': False,
         }
 
         with open(os.path.join(path, 'settings.ini'), 'w') as configfile:
@@ -78,8 +82,8 @@ def get_user_input(path):
                      'n_intervals': '', 
                      'dt': '', 
                      'coinc_time': '',
-                     'gui': False,
-                     'idle': default_settings['idle'],
+                     'gui': '',
+                     'idle': str2bool(default_settings['idle']),
                     }
 
     for prompt, setting in zip(prompts, user_settings.keys()): 
@@ -95,8 +99,6 @@ def get_user_input(path):
             print('Idle mode is on. Program will run until stopped by user.')
             user_settings[setting] = '0'
             continue
-
-
 
         user_settings[setting] = user_input
 
