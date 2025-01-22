@@ -79,18 +79,23 @@ def get_user_input(path):
                      'dt': '', 
                      'coinc_time': '',
                      'gui': False,
-                     'idle': False
+                     'idle': default_settings['idle'],
                     }
 
     for prompt, setting in zip(prompts, user_settings.keys()): 
+        user_input = input(prompt)
+
+        if setting == 'idle': 
+            continue
+
+        if user_input == '': 
+            user_input = default_settings[setting]
+
         if user_settings['idle'] and setting == 'n_intervals':
             print('Idle mode is on. Program will run until stopped by user.')
             user_settings[setting] = '0'
             continue
 
-        user_input = input(prompt)
-        if user_input == '': 
-            user_input = default_settings[setting]
 
 
         user_settings[setting] = user_input
