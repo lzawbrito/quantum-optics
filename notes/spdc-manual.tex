@@ -1,5 +1,18 @@
 \documentclass{article}
-\usepackage[smalltitle,usefancyhdr]{lzawbrito-template}
+\usepackage[smalltitle,usefancyhdr]{/Users/lzawbrito/latex-templates/lzawbrito-template}
+
+\usepackage[
+    sorting=none,
+    style=ext-numeric
+]{biblatex}  % better than bibtex
+\renewcommand*{\citesetup}{%
+  \sffamily
+  \biburlsetup
+  \frenchspacing}
+\addbibresource{ref.bib}
+\DeclareOuterCiteDelims{cite}{\sffamily\color{mygreen}\bibopenbracket}{\sffamily \color{mygreen}\bibclosebracket}
+
+
 
 \setdocnames{Lucas Z. Brito}{Entanglement Lab Instructor Manual}[PHYS2010]
 
@@ -21,7 +34,36 @@ down to the order of millimeters. One way
 With all optics in place, there are two degrees of freedom that must be tuned 
 to 
 
+
 \section{Theoretical Background}
 \subsection{Non-linear optics}
+Linear optics 
+\begin{equation*}
+  P(t) = \epsilon_0 \chi E(t)
+\end{equation*}
+
+Nonlinear optics 
+\begin{equation*}
+  P(t) = \epsilon_0 \left[
+    \chi^{(1)} E(t) 
+    + \chi^{(2)} E(t)^2
+    + \chi^{(3)} E(t)^3
+    \right]\qquad 
+    \chi^{(n)} \equiv n\text{-th order susc.}
+\end{equation*}
+
+$ E(t) = E_0 e^{i\omega t} + \text{c.c.} $
+Second harmonic generation from a scalar
+\begin{equation*}
+  P^{(2)} (t) = \epsilon_0 \chi^{(2)}E(t)^2
+    = \epsilon_0 \chi^{(2)} E_0 e^{2i\omega t}
+      + \epsilon_0 \chi^{(2)} E_0^\ast e^{-2i\omega t}
+        + 2\epsilon_0 \chi^{(2)} E_0 E_0^\ast
+\end{equation*}
+parametric - quantum mechanical state of crystal is same before and after
+
+\nocite{*}
+\addcontentsline{toc}{section}{Bibliography}
+\printbibliography[title=Bibliography]
 
 \end{document}

@@ -330,6 +330,14 @@ if __name__ == '__main__':
                                     int(settings['n_intervals']),
                                     settings['gui'],
                                     settings['idle'])
+        print("Means")
+        mean_string = ""
+        for c in np.mean(results, axis=0):
+            if c > 1e7:
+                mean_string += "{:.2e}  ".format(c)
+            else: 
+                mean_string += str(c).ljust(8) + "  "
+        print(mean_string)
 
         # np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
         np.savetxt(settings['data_dir'], results, fmt='%i', 
