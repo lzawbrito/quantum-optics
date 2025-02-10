@@ -13,3 +13,5 @@ altera/settings.ini
 *.synctex.*
 *.synctex(busy)
 *.toc
+.venv 
+data
