@@ -5,6 +5,7 @@ todo:
 [ ] fix idle overwritten by settings/do settings things more carefully 
 [ ] on filename prompt instead of paren fill out the previous dir
 [ ] progress bar
+[ ] just type inf for idle mode
 """
 import matplotlib.pyplot as plt 
 import matplotlib.animation as animation
@@ -14,11 +15,13 @@ import numpy as np
 import configparser
 import os 
 import struct
+from tqdm import tqdm
 os.system("")
 # https://stackoverflow.com/questions/12492810/python-how-can-i-make-the-ansi-escape-codes-to-work-also-in-windows
 
 BAUDRATE = 19200 
-DETECTORS = ["A", "B", "A'", "B'", "AB", "AA'", "BB'", "A'B'"]
+DETECTORS = ["A", "B", "A'", "B'", "AB", "AA'", "A'B'", "BB'"]
+HEADER_STRING = ''.join([s.ljust(10) for s in DETECTORS])
 
 WELCOME_STRING = r'''
 ╔═════════════════════════════════════════╤══════════════════════════════════════╗
@@ -186,7 +189,7 @@ def update_plot(i, times, results, ax):
 def convert_counts(i, ser, time_interval, results, times, idle, ax=None): 
     """..."""
 
-    def convert_frame(length): # is frame right terminology?
+    def convert_frame(length): 
         data_len = 41 * (length * 10) + 40 # time interval in tenths of seconds
 
         # this array stores the bytes received from the altera (valued 0-255).
@@ -224,7 +227,8 @@ def convert_counts(i, ser, time_interval, results, times, idle, ax=None):
                 out_string += "{:.2e}  ".format(c)
             else: 
                 out_string += str(c).ljust(8) + "  "
-        print(out_string) 
+        tqdm.write(out_string) 
+        # print(out_string)
 
         return counts
     
@@ -287,9 +291,16 @@ def acquire_data(ser, t_int, n_ints, gui, idle):
     i = 0
 
     times = [] 
-    while i < n_ints or idle:
-        convert_counts(i, ser, t_int, results, times, idle)
-        i += 1
+    # while i < n_ints or idle:
+    #     convert_counts(i, ser, t_int, results, times, idle)
+    #     i += 1
+    if idle: 
+        while True:
+            convert_counts(i, ser, t_int, results, times, idle)
+            i += 1
+    else: 
+        for i in tqdm(range(n_ints), ncols=83, bar_format='|{bar}| {elapsed}<{remaining}'):
+            convert_counts(i, ser, t_int, results, times, idle)
 
     if gui: 
         plt.show()
@@ -321,8 +332,7 @@ if __name__ == '__main__':
         ser = serial.Serial(settings['port'], BAUDRATE, timeout=0)
 
         # todo can make one 'detectors' array and join all these string together
-        print("A         B         A'        B'        AB        AA'       BB'" + \
-              "       A'B'")
+        print(HEADER_STRING)
         print("0         0         0         0         0         0         0" + \
               "         0")
         
@@ -330,18 +340,19 @@ if __name__ == '__main__':
                                     int(settings['n_intervals']),
                                     settings['gui'],
                                     settings['idle'])
-        print("Means")
+        print("\nMeans")
         mean_string = ""
+        print(HEADER_STRING)
         for c in np.mean(results, axis=0):
             if c > 1e7:
                 mean_string += "{:.2e}  ".format(c)
             else: 
-                mean_string += str(c).ljust(8) + "  "
+                mean_string += str(round(c)).ljust(8) + "  "
         print(mean_string)
 
         # np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
         np.savetxt(settings['data_dir'], results, fmt='%i', 
-                    header="A B A' B' AB AA' BB' A'B'")
+                    header=' '.join(DETECTORS))
 
         ser.close()
 
