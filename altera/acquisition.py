@@ -1,12 +1,3 @@
-"""
-Based on https://egalvez.colgate.domains/pql/wp-content/uploads/2022/07/FreeRunning4DetectorsAlteraV2.txt.
-
-todo: 
-[ ] fix idle overwritten by settings/do settings things more carefully 
-[ ] on filename prompt instead of paren fill out the previous dir
-[ ] progress bar
-[ ] just type inf for idle mode
-"""
 import matplotlib.pyplot as plt 
 import matplotlib.animation as animation
 import time
@@ -14,7 +5,6 @@ import serial
 import numpy as np
 import configparser
 import os 
-import struct
 from tqdm import tqdm
 os.system("")
 # https://stackoverflow.com/questions/12492810/python-how-can-i-make-the-ansi-escape-codes-to-work-also-in-windows
@@ -58,9 +48,8 @@ def create_settings_if_none(path):
             'n_intervals': '1',
             'dt': '1', 
             'coinc_time': '40',
-            'data_dir': './data/',
+            'data_dir': '',
             'gui': True,
-            'idle': False,
         }
 
         with open(os.path.join(path, 'settings.ini'), 'w') as configfile:
@@ -68,17 +57,16 @@ def create_settings_if_none(path):
 
 
 def get_user_input(path):
-
     config = configparser.ConfigParser() 
     config.read(os.path.join(path, 'settings.ini'))
 
     default_settings = config['user_input']
 
     prompts = [
-               f'Enter FPGA port ({default_settings['port']}):\t\t\t\t',
-               f'Number of intervals ({default_settings['n_intervals']}):\t\t\t\t', 
-               f'Time per interval (s) ({default_settings['dt']}):\t\t\t\t', 
-               f'Coincidence time (ns) ({default_settings['coinc_time']}):\t\t\t\t']
+               f'Enter FPGA port ({default_settings["port"]}):\t\t\t\t',
+               f'Number of intervals ({default_settings["n_intervals"]}):\t\t\t\t', 
+               f'Time per interval (s) ({default_settings["dt"]}):\t\t\t\t', 
+               f'Coincidence time (ns) ({default_settings["coinc_time"]}):\t\t\t\t']
     
     user_settings = {
                      'port' : '',
@@ -86,27 +74,17 @@ def get_user_input(path):
                      'dt': '', 
                      'coinc_time': '',
                      'gui': '',
-                     'idle': str2bool(default_settings['idle']),
                     }
 
     for prompt, setting in zip(prompts, user_settings.keys()): 
         user_input = input(prompt)
 
-        if setting == 'idle': 
-            continue
-
         if user_input == '': 
             user_input = default_settings[setting]
-
-        if user_settings['idle'] and setting == 'n_intervals':
-            print('Idle mode is on. Program will run until stopped by user.')
-            user_settings[setting] = '0'
-            continue
 
         user_settings[setting] = user_input
 
     # Handle data directory input
-
     overwrite = False
 
     data_dir = ''
@@ -137,9 +115,6 @@ def get_user_input(path):
             break
     
     user_settings['data_dir'] = data_dir
-        
-    # for key in user_settings.keys():
-    #     print(user_settings[key])
 
     return user_settings
 
@@ -152,8 +127,6 @@ def decode_int_5byte(data):
         i += 1
     return count
 
-# def decode_int(data): 
-#     return struct.unpack('<I', data)[0]
 
 def encode7bit(int):
     bytes_ = []
@@ -165,61 +138,49 @@ def encode7bit(int):
 
 def clean_up_data(raw_data, data_len): 
     tbi = raw_data.find(255) 
-    # print(tbi)
+    
+    # Added error handling if 255 isn't found
+    if tbi == -1:
+        tbi = 0
+    
     # Save to clean data array, starting from previous iteration's termination
     return raw_data[(tbi + 1):(tbi + data_len - 40)] 
 
 
-def update_plot(i, times, results, ax): 
-    for a in ax: 
-        a.clear()
-    ax[0].plot(range(times[i] + 1), results[0:(times[i] + 1), 0:4], label=DETECTORS[0:4])
-    ax[0].legend(loc='center left', bbox_to_anchor=(0, 0.5))
+def convert_frame(ser, length): 
+    data_len = 41 * (length * 10) + 40 # time interval in tenths of seconds
 
-    ax[1].plot(range(times[i] + 1), results[0:(times[i] + 1), 4:], label=DETECTORS[4:])
-    ax[1].legend(loc='center left', bbox_to_anchor=(0, 0.5))
+    # this array stores the bytes received from the altera (valued 0-255).
+    raw_data = bytearray()
+    for i in range(length):
+        altera_data = ser.read(512) # Each time interval we read 512 bytes.
+        raw_data += altera_data
 
-    ax[0].set_ylabel('Counts')
-    ax[1].set_xlabel('Time')
-    ax[1].set_ylabel('Counts')
-
-    return None 
-
-
-def convert_counts(i, ser, time_interval, results, times, idle, ax=None): 
-    """..."""
-
-    def convert_frame(length): 
-        data_len = 41 * (length * 10) + 40 # time interval in tenths of seconds
-
-        # this array stores the bytes received from the altera (valued 0-255).
-        raw_data = bytearray()
-        for i in range(length):
-            altera_data = ser.read(512) # Each time interval we read 512 bytes.
-            raw_data += altera_data
-
-        # Find termination byte (255) index 
+    # Find termination byte (255) index 
+    try:
         clean_data = clean_up_data(raw_data, data_len)
-
+        
         counts = np.zeros(8, dtype=np.int64)
 
         times = np.arange(0, 41 * length * 10, 41)
         detector_pairs = np.arange(0, 8)
 
-
         # loop through time 
         for t in times:
-            # should be 5 * 8 = 40 bytes. 
-            data_to_decode = clean_data[t:(t + 40)]
-            l = 0
+            # Check if we have enough data
+            if t + 40 <= len(clean_data):
+                # should be 5 * 8 = 40 bytes. 
+                data_to_decode = clean_data[t:(t + 40)]
+                l = 0
 
-            # loop through each detector pair (5 bytes each)
-            for d in detector_pairs: 
-                # reverse of byte array
-                count_from_data = decode_int_5byte(data_to_decode[l:l + 5])
-                counts[d] = counts[d] + count_from_data
-                l += 5 # move forward 5 bytes for next detector pair
-        
+                # loop through each detector pair (5 bytes each)
+                for d in detector_pairs: 
+                    if l + 5 <= len(data_to_decode):
+                        # reverse of byte array
+                        count_from_data = decode_int_5byte(data_to_decode[l:l + 5])
+                        counts[d] = counts[d] + count_from_data
+                        l += 5 # move forward 5 bytes for next detector pair
+    
         clear_line(1)
         out_string = ''
         for c in counts: 
@@ -227,45 +188,78 @@ def convert_counts(i, ser, time_interval, results, times, idle, ax=None):
                 out_string += "{:.2e}  ".format(c)
             else: 
                 out_string += str(c).ljust(8) + "  "
+
         tqdm.write(out_string) 
-        # print(out_string)
 
         return counts
-    
+    except Exception as e:
+        print(f"Error processing data: {e}")
+        return np.zeros(8, dtype=np.int64)
 
+
+# Separated animation update function from data collection
+def animate(i, ser, time_interval, results, times, ax, pbar=None):
+    # Get new data
+    counts = collect_data(ser, time_interval)
+    
+    # Add to results array
+    if i >= len(results):
+        results.append(counts)
+    else:
+        results[i] = counts
+        
+    # Update times if needed
+    if i >= len(times):
+        times.append(i)
+    
+    # Clear the axes
+    for a in ax:
+        a.clear()
+
+    # Plot data
+    data_array = np.array(results)
+    if len(data_array) > 0:
+        ax[0].plot(times[:len(data_array)], data_array[:, 0:4], label=DETECTORS[0:4])
+        ax[0].legend(loc='center left', bbox_to_anchor=(0, 0.5))
+        
+        ax[1].plot(times[:len(data_array)], data_array[:, 4:], label=DETECTORS[4:])
+        ax[1].legend(loc='center left', bbox_to_anchor=(0, 0.5))
+        
+        ax[0].set_ylabel('Counts')
+        ax[1].set_xlabel('Time')
+        ax[1].set_ylabel('Counts')
+
+    if pbar is not None:
+        pbar.update(1) 
+    return ax
+
+
+def collect_data(ser, time_interval):
     # We count differently depending on the time interval given. Minimum is 
     # 0.1 second (ds), if greater than 1 sec we split it into 1 sec groups.
     counts = np.zeros(8, dtype=np.int64) 
     if time_interval < 1: 
-        time.sleep(1)
-        counts += convert_frame(1)
+        time.sleep(time_interval)
+        counts += convert_frame(ser, 1)
     elif time_interval > 10: 
         for i in range(int(time_interval / 10)):
+            counts += convert_frame(ser, 1)
             time.sleep(1)
-            counts += convert_frame(1) 
         
         # do remainder
-        counts += convert_frame(int(time_interval % 10))
+        remainder = time_interval % 10
+        if remainder > 0:
+            counts += convert_frame(ser, int(remainder))
     else:
-        time.sleep(1)
-        counts += convert_frame(int(time_interval))
-
-    if not idle:
-        results[i, :] = counts
-        times.append(i)
-
-    if ax is not None: 
-        update_plot(i, times, results, ax)
+        counts += convert_frame(ser, int(time_interval))
     
-    if i > np.shape(results)[1]: 
-        plt.close() # if you close it here it's going to error 
+    return counts
 
 
 def acc_coinc(a, b, coinc_time, dt, n_measures):
     """
     Accidental coincidences (deltat = coinc_time * 10e-9)
     """
-
     # calculate the accidental coincidences (kiko ln 499) 
     return np.sum(a) * np.sum(b) * coinc_time * 10e-9 / (n_measures * dt)
 
@@ -273,40 +267,66 @@ def acc_coinc(a, b, coinc_time, dt, n_measures):
 def acquire_data(ser, t_int, n_ints, gui, idle): 
     # Create plot 
     fig, ax = plt.subplots(nrows=2) 
-    if not gui: 
-        ax = None
-    # TODO set up axes and stuff
+    plt.ion()  # Turn on interactive mode
+    
+    # Storage for results
+    results = []
     times = []
+    
+    # Setup the animation
+    if idle:
+        # For idle mode, we'll use a continuous animation
+        ani = animation.FuncAnimation(
+            fig, 
+            animate, 
+            fargs=(ser, t_int, results, times, ax),
+            interval=int(t_int * 1000),  # Convert to milliseconds
+            blit=False,
+            save_count=100  # Limit frames stored in memory
+        )
+        
+        try:
+            plt.show(block=True)  # Block until window is closed
+        except KeyboardInterrupt:
+            plt.close()
+    else:
+        pbar = tqdm(total=n_ints, ncols=83, bar_format='|{bar}| {elapsed}<{remaining}')
+        
+        # Function to check if animation should stop
+        def animation_condition(frame):
+            # Only run the animation if we haven't reached n_ints yet
+            if frame < n_ints:
+                return animate(frame, ser, t_int, results, times, ax, pbar)
+            # Return the axes without changing anything once we have enough data
+            return ax
+        
+        # Use a very large frames parameter with the condition function
+        # This way animation continues running but doesn't collect more data
+        ani = animation.FuncAnimation(
+            fig, 
+            animation_condition,
+            frames=n_ints,
+            interval=int(t_int * 1000),  # Convert to milliseconds
+            blit=False,
+            repeat=False  # Don't repeat
+        )
 
-    # Need a n_measurements x 8 (detectors + detector pairs) matrix for results
-    # n_measurements = n_intervals
-    # (A, B, A', B', AB, AA', BB', A'B')
-
-    results = np.zeros((n_ints, 8), dtype=np.int64)
-
-    if gui:
-        anim = animation.FuncAnimation(fig, convert_counts, 
-                                fargs=(ser, t_int, results, times, ax), frames=range(n_ints))
-
-    i = 0
-
-    times = [] 
-    # while i < n_ints or idle:
-    #     convert_counts(i, ser, t_int, results, times, idle)
-    #     i += 1
-    if idle: 
-        while True:
-            convert_counts(i, ser, t_int, results, times, idle)
-            i += 1
-    else: 
-        for i in tqdm(range(n_ints), ncols=83, bar_format='|{bar}| {elapsed}<{remaining}'):
-            convert_counts(i, ser, t_int, results, times, idle)
-
-    if gui: 
-        plt.show()
-    # two issues: (1) initializes and then there's two 0 values at first. 
-    #             (2) plot will keep looping frames
-    return results 
+        # Create a non-blocking figure manager to keep plot open
+        manager = plt.get_current_fig_manager()
+        
+        # Show the plot non-blocking
+        plt.show(block=False)
+        
+        # Wait until we have collected all the data
+        while len(results) < n_ints:
+            # Update the figure without blocking
+            fig.canvas.draw_idle()
+            fig.canvas.flush_events()
+        
+        # Animation is done collecting data, but plot remains open
+        # Now we can proceed with the rest of the code
+    
+    return np.array(results)
 
 
 if __name__ == '__main__':
@@ -331,31 +351,41 @@ if __name__ == '__main__':
 
         ser = serial.Serial(settings['port'], BAUDRATE, timeout=0)
 
-        # todo can make one 'detectors' array and join all these string together
         print(HEADER_STRING)
         print("0         0         0         0         0         0         0" + \
               "         0")
         
-        results = acquire_data(ser, float(settings['dt']), 
-                                    int(settings['n_intervals']),
-                                    settings['gui'],
-                                    settings['idle'])
-        print("\nMeans")
-        mean_string = ""
-        print(HEADER_STRING)
-        for c in np.mean(results, axis=0):
-            if c > 1e7:
-                mean_string += "{:.2e}  ".format(c)
-            else: 
-                mean_string += str(round(c)).ljust(8) + "  "
-        print(mean_string)
+        n_intervals = 0
+        idle = True
 
-        # np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
-        np.savetxt(settings['data_dir'], results, fmt='%i', 
-                    header=' '.join(DETECTORS))
+        if not (settings['n_intervals'] == 'inf'): 
+            n_intervals = int(settings['n_intervals'])
+            idle = False
+        
+        try:
+            results = acquire_data(ser, float(settings['dt']), 
+                                    n_intervals,
+                                    str2bool(settings['gui']),
+                                    idle)
+            
+            if not idle and len(results) > 0:
+                print("\nMeans")
+                mean_string = ""
+                print(HEADER_STRING)
+                for c in np.mean(results, axis=0):
+                    if c > 1e7:
+                        mean_string += "{:.2e}  ".format(c)
+                    else: 
+                        mean_string += str(round(c)).ljust(8) + "  "
+                print(mean_string)
 
-        ser.close()
+            # np.save(os.path.join(settings['data_dir'], 'test.npy'), results)
+            np.savetxt(settings['data_dir'], results, fmt='%i', 
+                        header=' '.join(DETECTORS))
+        except Exception as e:
+            print(f"Error during data acquisition: {e}")
+        finally:
+            ser.close()
 
-        running = True if input('Run again (y/[n])?').lower().replace(' ', '') == 'y' \
+        running = True if input('\nRun again (y/[n])?').lower().replace(' ', '') == 'y' \
                         else False
-
