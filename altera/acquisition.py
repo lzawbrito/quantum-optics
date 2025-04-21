@@ -21,7 +21,7 @@ WELCOME_STRING = r'''
 ║  \__\_\\_,_\__,_|_||_\__|\_,_|_|_|_|    │ Instructional labs @ Brown U.        ║
 ║  / _ \ _ __| |_(_)__ ___                │ Department of Physics.               ║
 ║ | (_) | '_ \  _| / _(_-<  Acquisition   │                                      ║
-║  \___/| .__/\__|_\__/__/  software v0.1 │ Author: Lucas Z. Brito               ║
+║  \___/| .__/\__|_\__/__/  software v1.0 │ Author: Lucas Z. Brito               ║
 ║       |_|                               │                                      ║
 ╚═════════════════════════════════════════╧══════════════════════════════════════╝ 
 '''
