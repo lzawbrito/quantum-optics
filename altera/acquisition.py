@@ -198,7 +198,12 @@ def convert_frame(ser, length):
 
 
 # Separated animation update function from data collection
-def animate(i, ser, time_interval, results, times, ax, pbar=None):
+def animate(i, ser, time_interval, results, times, ax, pbar=None, max_frames=None):
+    # Check if we've reached the maximum number of frames
+    if max_frames is not None and i >= max_frames:
+        # Don't update the progress bar anymore
+        return ax
+        
     # Get new data
     counts = collect_data(ser, time_interval)
     
@@ -229,8 +234,10 @@ def animate(i, ser, time_interval, results, times, ax, pbar=None):
         ax[1].set_xlabel('Time')
         ax[1].set_ylabel('Counts')
 
-    if pbar is not None:
-        pbar.update(1) 
+    # Update progress bar but only if we haven't reached the max frames
+    if pbar is not None and i < max_frames:
+        pbar.update(1)
+        
     return ax
 
 
@@ -290,22 +297,16 @@ def acquire_data(ser, t_int, n_ints, gui, idle):
         except KeyboardInterrupt:
             plt.close()
     else:
+        # Fix: Set the total to n_ints instead of n_ints-1 to match the frames
         pbar = tqdm(total=n_ints, ncols=83, bar_format='|{bar}| {elapsed}<{remaining}')
         
-        # Function to check if animation should stop
-        def animation_condition(frame):
-            # Only run the animation if we haven't reached n_ints yet
-            if frame < n_ints:
-                return animate(frame, ser, t_int, results, times, ax, pbar)
-            # Return the axes without changing anything once we have enough data
-            return ax
-        
-        # Use a very large frames parameter with the condition function
-        # This way animation continues running but doesn't collect more data
+        # Collect data for exactly n_ints frames
         ani = animation.FuncAnimation(
             fig, 
-            animation_condition,
-            frames=n_ints,
+            animate,
+            # Pass the maximum frames parameter to the animate function
+            fargs=(ser, t_int, results, times, ax, pbar, n_ints),
+            frames=n_ints,  # Exactly n_ints frames
             interval=int(t_int * 1000),  # Convert to milliseconds
             blit=False,
             repeat=False  # Don't repeat
@@ -322,9 +323,13 @@ def acquire_data(ser, t_int, n_ints, gui, idle):
             # Update the figure without blocking
             fig.canvas.draw_idle()
             fig.canvas.flush_events()
+            time.sleep(0.1)  # Small sleep to prevent CPU hogging
+            
+        # Close the progress bar once data collection is complete
+        pbar.close()
         
-        # Animation is done collecting data, but plot remains open
-        # Now we can proceed with the rest of the code
+        # Keep the plot open for a bit so user can see final results
+        plt.pause(1)
     
     return np.array(results)
 
