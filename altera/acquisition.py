@@ -27,7 +27,7 @@ WELCOME_STRING = r'''
 '''
 
 def str2bool(string):
-    if string.lower() == 'true':
+    if string.lower() == 'y':
         return True
     else:
         return False
@@ -66,7 +66,8 @@ def get_user_input(path):
                f'Enter FPGA port ({default_settings["port"]}):\t\t\t\t',
                f'Number of intervals ({default_settings["n_intervals"]}):\t\t\t\t', 
                f'Time per interval (s) ({default_settings["dt"]}):\t\t\t\t', 
-               f'Coincidence time (ns) ({default_settings["coinc_time"]}):\t\t\t\t']
+               f'Coincidence time (ns) ({default_settings["coinc_time"]}):\t\t\t\t',
+               f'Plot [y/n] ({default_settings["gui"]}):\t\t\t\t']
     
     user_settings = {
                      'port' : '',
@@ -205,7 +206,7 @@ def animate(i, ser, time_interval, results, times, ax, pbar=None, max_frames=Non
         return ax
         
     # Get new data
-    counts = collect_data(ser, time_interval)
+    counts = collect_data(ser, time_interval, plotting=True)
     
     # Add to results array
     if i >= len(results):
@@ -241,17 +242,20 @@ def animate(i, ser, time_interval, results, times, ax, pbar=None, max_frames=Non
     return ax
 
 
-def collect_data(ser, time_interval):
+def collect_data(ser, time_interval, plotting=False):
+    # TODO check if plotting and sleep only if NOT
     # We count differently depending on the time interval given. Minimum is 
     # 0.1 second (ds), if greater than 1 sec we split it into 1 sec groups.
     counts = np.zeros(8, dtype=np.int64) 
     if time_interval < 1: 
-        time.sleep(time_interval)
+        if not plotting:
+            time.sleep(time_interval)
         counts += convert_frame(ser, 1)
     elif time_interval > 10: 
         for i in range(int(time_interval / 10)):
             counts += convert_frame(ser, 1)
-            time.sleep(1)
+            if not plotting:
+                time.sleep(1)
         
         # do remainder
         remainder = time_interval % 10
@@ -259,6 +263,8 @@ def collect_data(ser, time_interval):
             counts += convert_frame(ser, int(remainder))
     else:
         counts += convert_frame(ser, int(time_interval))
+        if not plotting:
+            time.sleep(1)
     
     return counts
 
@@ -271,7 +277,7 @@ def acc_coinc(a, b, coinc_time, dt, n_measures):
     return np.sum(a) * np.sum(b) * coinc_time * 10e-9 / (n_measures * dt)
 
 
-def acquire_data(ser, t_int, n_ints, gui, idle): 
+def acquire_data(ser, t_int, n_ints, do_anim, idle): 
     # Create plot 
     fig, ax = plt.subplots(nrows=2) 
     plt.ion()  # Turn on interactive mode
@@ -282,55 +288,76 @@ def acquire_data(ser, t_int, n_ints, gui, idle):
     
     # Setup the animation
     if idle:
-        # For idle mode, we'll use a continuous animation
-        ani = animation.FuncAnimation(
-            fig, 
-            animate, 
-            fargs=(ser, t_int, results, times, ax),
-            interval=int(t_int * 1000),  # Convert to milliseconds
-            blit=False,
-            save_count=100  # Limit frames stored in memory
-        )
-        
-        try:
-            plt.show(block=True)  # Block until window is closed
-        except KeyboardInterrupt:
-            plt.close()
+        if do_anim:
+            # For idle mode, we'll use a continuous animation
+            ani = animation.FuncAnimation(
+                fig, 
+                animate, 
+                fargs=(ser, t_int, results, times, ax),
+                interval=int(t_int * 1000),  # Convert to milliseconds
+                blit=False,
+                save_count=100  # Limit frames stored in memory
+            )
+            
+            try:
+                plt.show(block=True)  # Block until window is closed
+            except KeyboardInterrupt:
+                plt.close()
+        else: 
+            while True:
+                try: 
+                    results.append(collect_data(ser, t_int))
+                    if len(results) > 10:
+                        results = results[-10:]
+                except KeyboardInterrupt:
+                    print(results)
+                    break
+                
     else:
         # Fix: Set the total to n_ints instead of n_ints-1 to match the frames
         pbar = tqdm(total=n_ints, ncols=83, bar_format='|{bar}| {elapsed}<{remaining}')
-        
-        # Collect data for exactly n_ints frames
-        ani = animation.FuncAnimation(
-            fig, 
-            animate,
-            # Pass the maximum frames parameter to the animate function
-            fargs=(ser, t_int, results, times, ax, pbar, n_ints),
-            frames=n_ints,  # Exactly n_ints frames
-            interval=int(t_int * 1000),  # Convert to milliseconds
-            blit=False,
-            repeat=False  # Don't repeat
-        )
+        if do_anim:  
+            # Collect data for exactly n_ints frames
+            ani = animation.FuncAnimation(
+                fig, 
+                animate,
+                # Pass the maximum frames parameter to the animate function
+                fargs=(ser, t_int, results, times, ax, pbar, n_ints),
+                frames=n_ints,  # Exactly n_ints frames
+                interval=int(t_int * 1000),  # Convert to milliseconds
+                blit=False,
+                repeat=False  # Don't repeat
+            )
 
-        # Create a non-blocking figure manager to keep plot open
-        manager = plt.get_current_fig_manager()
-        
-        # Show the plot non-blocking
-        plt.show(block=False)
-        
-        # Wait until we have collected all the data
-        while len(results) < n_ints:
-            # Update the figure without blocking
-            fig.canvas.draw_idle()
-            fig.canvas.flush_events()
-            time.sleep(0.1)  # Small sleep to prevent CPU hogging
+            # Create a non-blocking figure manager to keep plot open
+            manager = plt.get_current_fig_manager()
             
-        # Close the progress bar once data collection is complete
-        pbar.close()
-        
-        # Keep the plot open for a bit so user can see final results
-        plt.pause(1)
-    
+            # Show the plot non-blocking
+            plt.show(block=False)
+            
+            # Wait until we have collected all the data
+            while len(results) < n_ints:
+                # Update the figure without blocking
+                fig.canvas.draw_idle()
+                fig.canvas.flush_events()
+                time.sleep(0.1)  # Small sleep to prevent CPU hogging
+                
+            # Close the progress bar once data collection is complete
+            pbar.close()
+            
+            # Keep the plot open for a bit so user can see final results
+            plt.pause(1)
+        else: 
+            for i in range(n_ints):
+                counts = collect_data(ser, t_int)
+
+                # Add to results array
+                if i >= len(results):
+                    results.append(counts)
+                else:
+                    results[i] = counts
+
+                pbar.update(1)
     return np.array(results)
 
 
@@ -373,7 +400,7 @@ if __name__ == '__main__':
                                     str2bool(settings['gui']),
                                     idle)
             
-            if not idle and len(results) > 0:
+            if len(results) > 0:
                 print("\nMeans")
                 mean_string = ""
                 print(HEADER_STRING)
